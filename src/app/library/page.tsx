@@ -166,7 +166,7 @@ export default async function LibraryPage() {
                 href="/pricing"
                 className="inline-flex items-center justify-center rounded-full border border-[#ead6df] px-6 py-3 text-sm font-medium text-slate-700 transition hover:bg-[#fcf6f9]"
               >
-                Voir la Formule Studio
+                Voir les Formules
               </Link>
             </div>
           </Card>

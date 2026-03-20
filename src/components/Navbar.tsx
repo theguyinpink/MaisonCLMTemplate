@@ -49,7 +49,7 @@ export function Navbar() {
   }
 
   const accountCta = loading ? null : user ? (
-    <button onClick={handleAccount} className="classic-button-primary px-5 py-3 text-sm">
+    <button onClick={handleAccount} className="classic-button-primary px-5 py-3 text-sm cursor-pointer">
       Mon compte
     </button>
   ) : (
@@ -84,7 +84,7 @@ export function Navbar() {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-40 bg-black/15 px-4 pt-24 backdrop-blur-sm lg:hidden">
+        <div className="fixed inset-0 z-40 bg-black/15 px-4 pt-24 backdrop-blur-sm lg:hidden ">
           <div className="mx-auto max-w-md rounded-[28px] border border-[var(--border)] bg-white p-4 shadow-[var(--shadow-soft)]">
             <div className="space-y-2">
               {navLinks.map((link) => (

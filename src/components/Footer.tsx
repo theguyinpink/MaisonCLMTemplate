@@ -14,8 +14,9 @@ export default function Footer() {
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
           <Link href="/shop" className="transition hover:text-[var(--foreground)]">Templates</Link>
           <Link href="/pricing" className="transition hover:text-[var(--foreground)]">Tarifs</Link>
-          <Link href="/contact" className="transition hover:text-[var(--foreground)]">Contact</Link>
           <Link href="/mentions-legales" className="transition hover:text-[var(--foreground)]">Mentions légales</Link>
+          <Link href="/confidentialite" className="transition hover:text-[var(--foreground)]">Politique de confidentialité</Link>
+          <Link href="/cgv" className="transition hover:text-[var(--foreground)]">CGV</Link>
         </div>
       </div>
       <div className="mx-auto mt-6 max-w-380 border-t border-[var(--border)] pt-4 text-xs text-[var(--foreground)]/46">

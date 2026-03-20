@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getCart, removeFromCart, CartItem } from "@/lib/cart";
+import AuthRequiredModal from "@/components/cart/AuthRequiredModal";
 
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     setItems(getCart());
@@ -18,9 +20,51 @@ export default function CartPage() {
 
   const summaryText = useMemo(() => {
     if (items.length === 0) return "Ton panier est vide pour le moment.";
-    if (items.length === 1) return "1 template prêt à passer à l’étape suivante.";
+    if (items.length === 1)
+      return "1 template prêt à passer à l’étape suivante.";
     return `${items.length} templates prêts à passer à l’étape suivante.`;
   }, [items]);
+
+  const handleCheckout = async () => {
+    if (items.length === 0) return;
+
+    try {
+      const res = await fetch("/api/stripe/checkout-template", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            id: item.id,
+            title: item.title,
+            price_amount: item.price_amount,
+            currency: item.currency,
+          })),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 401) {
+        setShowAuthModal(true);
+        return;
+      }
+
+      if (!res.ok) {
+        console.error("Erreur checkout template :", data);
+        alert(data.error || "Impossible de lancer le paiement.");
+        return;
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Une erreur est survenue pendant la création du paiement.");
+    }
+  };
 
   return (
     <main className="mx-auto w-full max-w-380 px-4 py-10 sm:px-6 lg:px-10">
@@ -31,8 +75,12 @@ export default function CartPage() {
               <p className="inline-flex rounded-full border border-[var(--border)] bg-white/80 px-4 py-2 text-xs font-semibold text-black/55">
                 Panier Maison CLM
               </p>
-              <h1 className="mt-4 text-4xl font-display text-black/90 sm:text-5xl">Ton panier</h1>
-              <p className="mt-3 text-sm leading-relaxed text-black/60 sm:text-base">{summaryText}</p>
+              <h1 className="mt-4 text-4xl font-display text-black/90 sm:text-5xl">
+                Ton panier
+              </h1>
+              <p className="mt-3 text-sm leading-relaxed text-black/60 sm:text-base">
+                {summaryText}
+              </p>
             </div>
 
             <Link
@@ -45,9 +93,12 @@ export default function CartPage() {
 
           {items.length === 0 ? (
             <div className="relative z-10 mt-8 rounded-[28px] border border-[var(--border)] bg-white/85 p-6">
-              <p className="text-lg font-semibold text-black/82">Aucun template pour l’instant.</p>
+              <p className="text-lg font-semibold text-black/82">
+                Aucun template pour l’instant.
+              </p>
               <p className="mt-2 max-w-xl text-sm leading-relaxed text-black/58">
-                Quand tu ajouteras un template depuis la boutique, il apparaîtra ici avec une présentation plus claire et plus premium.
+                Quand tu ajouteras un template depuis la boutique, il apparaîtra
+                ici avec une présentation plus claire et plus premium.
               </p>
             </div>
           ) : (
@@ -61,13 +112,17 @@ export default function CartPage() {
                     <p className="text-xs font-semibold uppercase tracking-[0.24em] text-black/38">
                       Template {String(index + 1).padStart(2, "0")}
                     </p>
-                    <p className="mt-2 text-xl font-semibold text-black/88">{item.title}</p>
-                    <p className="mt-2 text-sm text-black/56">{item.price_label || "Sur devis"}</p>
+                    <p className="mt-2 text-xl font-semibold text-black/88">
+                      {item.title}
+                    </p>
+                    <p className="mt-2 text-sm text-black/56">
+                      {item.price_label || "Sur devis"}
+                    </p>
                   </div>
 
                   <button
                     onClick={() => remove(item.id)}
-                    className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm font-semibold text-black/72 transition hover:border-[var(--border-strong)] hover:bg-[var(--accent-soft)]"
+                    className="cursor-pointer rounded-2xl border border-[var(--border)] px-4 py-3 text-sm font-semibold text-black/72 transition hover:border-[var(--border-strong)] hover:bg-[var(--accent-soft)]"
                   >
                     Supprimer
                   </button>
@@ -82,20 +137,28 @@ export default function CartPage() {
             <h2 className="text-xl font-semibold text-black/85">Résumé</h2>
             <div className="mt-5 space-y-3">
               <SummaryRow label="Templates" value={String(items.length)} />
-              <SummaryRow label="Checkout" value="Bientôt" />
+              <SummaryRow label="Checkout" value="Sécurisé Stripe" />
               <SummaryRow label="Accès" value="Compte client" />
             </div>
 
-            <button className="mt-6 w-full rounded-2xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-dark)]">
-              Paiement bientôt
+            <button
+              onClick={handleCheckout}
+              disabled={items.length === 0}
+              className="mt-5 inline-flex w-full cursor-pointer items-center justify-center rounded-full bg-[#0f172a] px-5 py-3 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Payer
             </button>
-
-            <p className="mt-4 text-xs leading-relaxed text-black/45">
-              Le panier est maintenant plus clair visuellement. Il restera à brancher Stripe ou ton système de paiement final.
-            </p>
           </div>
         </aside>
       </section>
+
+      <AuthRequiredModal
+        open={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onConfirm={() => {
+          window.location.href = "/auth?redirect=/cart";
+        }}
+      />
     </main>
   );
 }

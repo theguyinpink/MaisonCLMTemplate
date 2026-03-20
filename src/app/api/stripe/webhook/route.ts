@@ -49,51 +49,129 @@ export async function POST(req: Request) {
         const userId = session.metadata?.user_id ?? null;
 
         if (!userId) break;
-        if (session.mode !== "subscription") break;
-        if (!session.subscription) break;
 
-        const stripeSubscription = await stripe.subscriptions.retrieve(
-          String(session.subscription)
-        );
+        // ---- ABONNEMENT ----
+        if (session.mode === "subscription" && session.subscription) {
+          const stripeSubscription = await stripe.subscriptions.retrieve(
+            String(session.subscription)
+          );
 
-        const priceId = stripeSubscription.items.data[0]?.price?.id ?? null;
-        const plan = await getPlanByStripePriceId(priceId);
+          const priceId = stripeSubscription.items.data[0]?.price?.id ?? null;
+          const plan = await getPlanByStripePriceId(priceId);
 
-        const currentPeriodStart =
-          stripeSubscription.items.data[0]?.current_period_start
-            ? new Date(
-                stripeSubscription.items.data[0].current_period_start * 1000
-              ).toISOString()
+          const currentPeriodStart =
+            stripeSubscription.items.data[0]?.current_period_start
+              ? new Date(
+                  stripeSubscription.items.data[0].current_period_start * 1000
+                ).toISOString()
+              : null;
+
+          const currentPeriodEnd =
+            stripeSubscription.items.data[0]?.current_period_end
+              ? new Date(
+                  stripeSubscription.items.data[0].current_period_end * 1000
+                ).toISOString()
+              : null;
+
+          const canceledAt = stripeSubscription.canceled_at
+            ? new Date(stripeSubscription.canceled_at * 1000).toISOString()
             : null;
 
-        const currentPeriodEnd =
-          stripeSubscription.items.data[0]?.current_period_end
-            ? new Date(
-                stripeSubscription.items.data[0].current_period_end * 1000
-              ).toISOString()
-            : null;
+          await supabaseAdmin.from("subscriptions").upsert(
+            {
+              user_id: userId,
+              plan_id: plan?.id ?? null,
+              stripe_customer_id: session.customer ? String(session.customer) : null,
+              stripe_subscription_id: stripeSubscription.id,
+              status: stripeSubscription.status,
+              current_period_start: currentPeriodStart,
+              current_period_end: currentPeriodEnd,
+              cancel_at_period_end:
+                stripeSubscription.cancel_at_period_end ?? false,
+              canceled_at: canceledAt,
+              updated_at: new Date().toISOString(),
+            },
+            {
+              onConflict: "stripe_subscription_id",
+            }
+          );
+        }
 
-        const canceledAt = stripeSubscription.canceled_at
-          ? new Date(stripeSubscription.canceled_at * 1000).toISOString()
-          : null;
+        // ---- ACHAT TEMPLATE ----
+        if (
+          session.mode === "payment" &&
+          session.metadata?.purchase_type === "template"
+        ) {
+          const templateIds = (session.metadata.template_ids || "")
+            .split(",")
+            .map((id) => id.trim())
+            .filter(Boolean);
 
-        await supabaseAdmin.from("subscriptions").upsert(
-          {
-            user_id: userId,
-            plan_id: plan?.id ?? null,
-            stripe_customer_id: session.customer ? String(session.customer) : null,
-            stripe_subscription_id: stripeSubscription.id,
-            status: stripeSubscription.status,
-            current_period_start: currentPeriodStart,
-            current_period_end: currentPeriodEnd,
-            cancel_at_period_end: stripeSubscription.cancel_at_period_end ?? false,
-            canceled_at: canceledAt,
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: "stripe_subscription_id",
+          const templateTitles = (session.metadata.template_titles || "")
+            .split(" || ")
+            .map((title) => title.trim());
+
+          const templatePrices = (session.metadata.template_prices || "")
+            .split(",")
+            .map((price) => Number(price));
+
+          const currency =
+            session.metadata.currency ||
+            session.currency?.toUpperCase() ||
+            "EUR";
+
+          const totalAmount =
+            typeof session.amount_total === "number"
+              ? session.amount_total / 100
+              : null;
+
+          const paidAt =
+            session.status === "complete" || session.payment_status === "paid"
+              ? new Date().toISOString()
+              : null;
+
+          const { data: createdOrder, error: orderError } = await supabaseAdmin
+            .from("orders")
+            .insert({
+              user_id: userId,
+              status: session.payment_status === "paid" ? "paid" : "pending",
+              total_amount: totalAmount,
+              stripe_checkout_session_id: session.id,
+              stripe_payment_intent_id: session.payment_intent
+                ? String(session.payment_intent)
+                : null,
+              paid_at: paidAt,
+              currency,
+            })
+            .select("id")
+            .single();
+
+          if (orderError || !createdOrder) {
+            console.error("Erreur création order :", orderError);
+            break;
           }
-        );
+
+          const orderItems = templateIds.map((templateId, index) => ({
+            order_id: createdOrder.id,
+            template_id: templateId,
+            quantity: 1,
+            unit_price: Number.isFinite(templatePrices[index])
+              ? templatePrices[index]
+              : null,
+            title_snapshot: templateTitles[index] || null,
+            download_url: null,
+          }));
+
+          if (orderItems.length > 0) {
+            const { error: itemsError } = await supabaseAdmin
+              .from("order_items")
+              .insert(orderItems);
+
+            if (itemsError) {
+              console.error("Erreur création order_items :", itemsError);
+            }
+          }
+        }
 
         break;
       }

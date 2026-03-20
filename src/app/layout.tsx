@@ -14,11 +14,15 @@ const playfair = Playfair_Display({
   weight: ["400", "500", "600", "700"],
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="fr">
       <body className={`${inter.variable} ${playfair.variable} min-h-screen`}>
-        <div className="relative min-h-screen overflow-x-hidden">
+        <div className="relative flex min-h-screen flex-col overflow-x-hidden">
           <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-28 border-b border-[var(--border)] bg-white/78 backdrop-blur-xl" />
             <div className="absolute -left-28 top-20 h-72 w-72 rounded-full bg-[var(--accent-light)]/55 blur-3xl" />
@@ -27,7 +31,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
 
           <Navbar />
-          <div className="flex-1">{children}</div>
+
+          <main className="flex-1">
+            {children}
+          </main>
+
           <Footer />
         </div>
       </body>

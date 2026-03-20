@@ -62,7 +62,8 @@ export async function userOwnsTemplate(
 
   const supabase = await createServerSupabaseClient();
 
-  const { data, error } = await supabase
+  // 1. Vérifie d'abord entitlements si tu continues à l'utiliser
+  const { data: entitlementData, error: entitlementError } = await supabase
     .from("entitlements")
     .select("id")
     .eq("user_id", resolvedUserId)
@@ -71,9 +72,31 @@ export async function userOwnsTemplate(
     .or("access_end.is.null,access_end.gt.now()")
     .maybeSingle();
 
-  if (error) return false;
+  if (!entitlementError && entitlementData) {
+    return true;
+  }
 
-  return !!data;
+  // 2. Vérifie ensuite les achats unitaires via orders + order_items
+  const { data: orderItemData, error: orderItemError } = await supabase
+    .from("order_items")
+    .select(`
+      id,
+      order_id,
+      orders!inner (
+        id,
+        user_id,
+        status
+      )
+    `)
+    .eq("template_id", templateId)
+    .eq("orders.user_id", resolvedUserId)
+    .eq("orders.status", "paid")
+    .limit(1)
+    .maybeSingle();
+
+  if (orderItemError) return false;
+
+  return !!orderItemData;
 }
 
 export async function userHasActiveSubscription(userId?: string | null) {
@@ -101,7 +124,8 @@ export async function getOwnedTemplates(userId?: string | null) {
 
   const supabase = await createServerSupabaseClient();
 
-  const { data, error } = await supabase
+  // Templates via entitlements
+  const { data: entitlementTemplates } = await supabase
     .from("entitlements")
     .select(`
       template_id,
@@ -118,7 +142,53 @@ export async function getOwnedTemplates(userId?: string | null) {
     .eq("user_id", resolvedUserId)
     .eq("is_active", true);
 
-  if (error || !data) return [];
+  // Templates via achats unitaires
+  const { data: purchasedTemplates } = await supabase
+    .from("order_items")
+    .select(`
+      template_id,
+      templates (
+        id,
+        slug,
+        title,
+        short_description,
+        category,
+        tags,
+        is_published
+      ),
+      orders!inner (
+        id,
+        user_id,
+        status
+      )
+    `)
+    .eq("orders.user_id", resolvedUserId)
+    .eq("orders.status", "paid");
 
-  return data;
+  const entitlementList = entitlementTemplates ?? [];
+  const purchasedList = purchasedTemplates ?? [];
+
+  const mergedMap = new Map<string, any>();
+
+  for (const item of entitlementList) {
+    const template = Array.isArray(item.templates)
+      ? item.templates[0]
+      : item.templates;
+
+    if (template?.id) {
+      mergedMap.set(template.id, template);
+    }
+  }
+
+  for (const item of purchasedList) {
+    const template = Array.isArray(item.templates)
+      ? item.templates[0]
+      : item.templates;
+
+    if (template?.id) {
+      mergedMap.set(template.id, template);
+    }
+  }
+
+  return Array.from(mergedMap.values());
 }

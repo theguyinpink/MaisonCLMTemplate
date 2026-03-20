@@ -47,7 +47,7 @@ export default function CheckoutButton({
       type="button"
       onClick={handleClick}
       disabled={loading}
-      className={className}
+      className={`${className ?? ""} cursor-pointer disabled:cursor-not-allowed`}
     >
       {loading ? "Redirection..." : children}
     </button>

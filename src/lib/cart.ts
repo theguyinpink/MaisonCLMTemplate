@@ -2,33 +2,85 @@ export type CartItem = {
   id: string;
   slug: string;
   title: string;
-  price_label: string | null;
+  price_label?: string | null;
+  price_amount?: number | null;
+  currency?: string | null;
+  image_url?: string | null;
 };
 
-const KEY = "clm_cart";
+const CART_KEY = "maison-clm-cart";
+const CART_EVENT = "maison-clm-cart-updated";
+
+type CartListener = (items: CartItem[]) => void;
+
+function emitCartUpdate(items: CartItem[]) {
+  if (typeof window === "undefined") return;
+
+  window.dispatchEvent(
+    new CustomEvent<CartItem[]>(CART_EVENT, {
+      detail: items,
+    })
+  );
+}
 
 export function getCart(): CartItem[] {
   if (typeof window === "undefined") return [];
-  const raw = localStorage.getItem(KEY);
-  return raw ? JSON.parse(raw) : [];
+
+  try {
+    const raw = localStorage.getItem(CART_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as CartItem[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCart(items: CartItem[]) {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem(CART_KEY, JSON.stringify(items));
+  emitCartUpdate(items);
 }
 
 export function addToCart(item: CartItem) {
-  const cart = getCart();
+  const items = getCart();
+  const exists = items.some((cartItem) => cartItem.id === item.id);
 
-  // pas de doublon
-  if (cart.find((c) => c.id === item.id)) return;
+  if (exists) {
+    emitCartUpdate(items);
+    return;
+  }
 
-  cart.push(item);
-  localStorage.setItem(KEY, JSON.stringify(cart));
+  saveCart([...items, item]);
 }
 
 export function removeFromCart(id: string) {
-  const cart = getCart().filter((c) => c.id !== id);
-  localStorage.setItem(KEY, JSON.stringify(cart));
+  const items = getCart().filter((item) => item.id !== id);
+  saveCart(items);
 }
 
-export function subscribeCart(cb: () => void) {
-  window.addEventListener("storage", cb);
-  return () => window.removeEventListener("storage", cb);
+export function clearCart() {
+  saveCart([]);
+}
+
+export function isInCart(id: string) {
+  return getCart().some((item) => item.id === id);
+}
+
+export function subscribeCart(listener: CartListener) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const handler = (event: Event) => {
+    const customEvent = event as CustomEvent<CartItem[]>;
+    listener(customEvent.detail ?? getCart());
+  };
+
+  window.addEventListener(CART_EVENT, handler);
+  window.addEventListener("storage", () => listener(getCart()));
+
+  return () => {
+    window.removeEventListener(CART_EVENT, handler);
+  };
 }

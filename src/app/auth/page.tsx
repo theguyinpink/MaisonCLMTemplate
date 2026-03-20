@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase/browser";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -11,8 +11,17 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const router = useRouter();
   const [showEmailNotice, setShowEmailNotice] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const redirectTo = useMemo(() => {
+    const redirect = searchParams.get("redirect");
+    if (!redirect) return "/";
+    return redirect.startsWith("/") ? redirect : "/";
+  }, [searchParams]);
 
   async function submit() {
     setMsg(null);
@@ -32,7 +41,8 @@ export default function AuthPage() {
         }
 
         setMsg("Connecté ✅");
-        router.push("/");
+        router.push(redirectTo);
+        router.refresh();
         return;
       }
 
@@ -53,6 +63,7 @@ export default function AuthPage() {
       setMsg(null);
       setMode("login");
       setPassword("");
+      setShowPassword(false);
     } catch (e: any) {
       setMsg(e?.message ?? "Erreur inconnue");
     } finally {
@@ -69,9 +80,11 @@ export default function AuthPage() {
               <p className="inline-flex rounded-full border border-[var(--border)] bg-white/80 px-4 py-2 text-xs font-semibold text-black/55">
                 Compte Maison CLM
               </p>
+
               <h1 className="mt-5 text-4xl font-semibold leading-tight text-black/90 sm:text-5xl">
                 Accède à ton espace, à ta bibliothèque et à tes futurs achats.
               </h1>
+
               <p className="mt-4 text-sm leading-relaxed text-black/62 sm:text-base">
                 L’auth reprend maintenant le style premium du site principal :
                 plus clair, plus cohérent, et plus rassurant pour un utilisateur
@@ -83,7 +96,10 @@ export default function AuthPage() {
                   title="Connexion simple"
                   text="Accès rapide à ton espace."
                 />
-                <SmallCard title="Bibliothèque" text="Retrouve tes templates." />
+                <SmallCard
+                  title="Bibliothèque"
+                  text="Retrouve tes templates."
+                />
                 <SmallCard
                   title="Suite logique"
                   text="Parfait pour préparer le checkout plus tard."
@@ -96,22 +112,31 @@ export default function AuthPage() {
             <div className="rounded-[28px] border border-[var(--border)] bg-white p-5 sm:p-6">
               <div className="flex gap-2 rounded-full bg-[var(--accent-soft)] p-1">
                 <button
-                  className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  type="button"
+                  className={`flex-1 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition ${
                     mode === "login"
                       ? "bg-white text-black shadow-sm"
                       : "text-black/58"
                   }`}
-                  onClick={() => setMode("login")}
+                  onClick={() => {
+                    setMode("login");
+                    setMsg(null);
+                  }}
                 >
                   Connexion
                 </button>
+
                 <button
-                  className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  type="button"
+                  className={`flex-1 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition ${
                     mode === "signup"
                       ? "bg-white text-black shadow-sm"
                       : "text-black/58"
                   }`}
-                  onClick={() => setMode("signup")}
+                  onClick={() => {
+                    setMode("signup");
+                    setMsg(null);
+                  }}
                 >
                   Inscription
                 </button>
@@ -122,7 +147,9 @@ export default function AuthPage() {
                   <span className="text-sm font-semibold text-black/72">
                     Email
                   </span>
+
                   <input
+                    type="email"
                     className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3 outline-none transition focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(216,106,162,0.08)]"
                     placeholder="ton@email.com"
                     value={email}
@@ -134,17 +161,29 @@ export default function AuthPage() {
                   <span className="text-sm font-semibold text-black/72">
                     Mot de passe
                   </span>
-                  <input
-                    className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3 outline-none transition focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(216,106,162,0.08)]"
-                    placeholder="••••••••"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+
+                  <div className="relative">
+                    <input
+                      className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 py-3 pr-24 outline-none transition focus:border-[var(--border-strong)] focus:ring-4 focus:ring-[rgba(216,106,162,0.08)]"
+                      placeholder="••••••••"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer rounded-full px-3 py-1 text-sm font-medium text-black/55 transition hover:bg-white hover:text-black"
+                    >
+                      {showPassword ? "Masquer" : "Afficher"}
+                    </button>
+                  </div>
                 </label>
 
                 <button
-                  className="w-full rounded-2xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-dark)] disabled:opacity-60"
+                  type="button"
+                  className="w-full cursor-pointer rounded-2xl bg-[var(--accent)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-dark)] disabled:cursor-not-allowed disabled:opacity-60"
                   onClick={submit}
                   disabled={busy}
                 >
@@ -163,7 +202,7 @@ export default function AuthPage() {
 
                 <Link
                   href="/shop"
-                  className="block text-center text-sm font-medium text-black/56 transition hover:text-black"
+                  className="block cursor-pointer text-center text-sm font-medium text-black/56 transition hover:text-black"
                 >
                   Retour à la boutique
                 </Link>
@@ -193,7 +232,7 @@ export default function AuthPage() {
             <button
               type="button"
               onClick={() => setShowEmailNotice(false)}
-              className="mt-5 inline-flex rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-dark)]"
+              className="mt-5 inline-flex cursor-pointer rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-dark)]"
             >
               J’ai compris
             </button>

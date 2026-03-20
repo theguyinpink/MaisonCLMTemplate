@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import AddToCartButton from "@/components/AddToCartButton";
 import {
   userHasAccessToTemplate,
   userHasActiveSubscription,
@@ -172,18 +173,23 @@ export default async function ShopSlugPage({ params }: PageProps) {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    className="inline-flex items-center justify-center rounded-full bg-[#0f172a] px-6 py-3 text-sm font-medium text-white"
-                  >
-                    Acheter ce template
-                  </button>
+                  <AddToCartButton
+                    item={{
+                      id: template.id,
+                      slug: template.slug,
+                      title: template.title,
+                      price_label: price,
+                      price_amount: template.price_amount ?? null,
+                      currency: template.currency ?? "EUR",
+                      image_url: mainImage?.url ?? null,
+                    }}
+                  />
 
                   <Link
                     href="/pricing"
                     className="inline-flex items-center justify-center rounded-full border border-[#ead6df] px-6 py-3 text-sm font-medium text-slate-700 transition hover:bg-[#fcf6f9]"
                   >
-                    Voir aussi la Formule Studio
+                    Voir aussi les Formules
                   </Link>
                 </div>
               </>
