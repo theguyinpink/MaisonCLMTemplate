@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
-import { AdminImageUploader } from "@/components/admin/AdminImageUploader";
 import { AdminImagesByRole } from "@/components/admin/AdminImagesByRole";
 
 type TemplateRow = {
@@ -11,7 +10,7 @@ type TemplateRow = {
   title: string;
   short_description: string;
   long_description: string | null;
-  price_amount: string | null;
+  price_amount: number | null;
   category: string | null;
   tags: string[];
   is_published: boolean;
@@ -26,7 +25,7 @@ export function AdminDashboard() {
 
   const selected = useMemo(
     () => templates.find((t) => t.id === selectedId) ?? null,
-    [templates, selectedId],
+    [templates, selectedId]
   );
 
   async function load() {
@@ -35,8 +34,13 @@ export function AdminDashboard() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) return setMsg(error.message);
-    setTemplates((data as any) ?? []);
+    if (error) {
+      setMsg(error.message);
+      return;
+    }
+
+    setTemplates((data as TemplateRow[]) ?? []);
+
     if (view === "edit" && !selectedId && data?.[0]?.id) {
       setSelectedId(data[0].id);
     }
@@ -56,7 +60,10 @@ export function AdminDashboard() {
       .update({ is_published: next })
       .eq("id", t.id);
 
-    if (error) return setMsg(error.message);
+    if (error) {
+      setMsg(error.message);
+      return;
+    }
 
     await load();
 
@@ -76,7 +83,7 @@ export function AdminDashboard() {
         <div>
           <h1 className="text-2xl font-semibold">Admin</h1>
           <p className="mt-1 text-sm text-black/60">
-            Ajoute tes templates, gère les images (Storage), publie/dépublie.
+            Ajoute tes templates, gère les images, publie/dépublie.
           </p>
         </div>
 
@@ -86,14 +93,14 @@ export function AdminDashboard() {
               .signOut()
               .then(() => (window.location.href = "/shop"))
           }
-          className="w-fit rounded-2xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-black/80 hover:bg-black/5 transition"
+          className="w-fit rounded-2xl border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-black/80 transition hover:bg-black/5"
         >
           Se déconnecter
         </button>
       </div>
 
       {msg ? (
-        <div className="mt-6 rounded-3xl border border-black/5 bg-white p-4 shadow-sm text-sm text-black/70">
+        <div className="mt-6 rounded-3xl border border-black/5 bg-white p-4 text-sm text-black/70 shadow-sm">
           {msg}
         </div>
       ) : null}
@@ -130,7 +137,7 @@ export function AdminDashboard() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold">{t.title}</p>
-                    <p className="text-xs text-black/50 mt-1">{t.slug}</p>
+                    <p className="mt-1 text-xs text-black/50">{t.slug}</p>
                   </div>
                   <span
                     className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
@@ -144,6 +151,7 @@ export function AdminDashboard() {
                 </div>
               </button>
             ))}
+
             {templates.length === 0 ? (
               <p className="text-sm text-black/60">Aucun template.</p>
             ) : null}
@@ -171,15 +179,16 @@ export function AdminDashboard() {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => togglePublish(selected)}
-                  className="rounded-2xl bg-black px-5 py-3 text-sm font-semibold text-white hover:opacity-90 transition"
+                  className="rounded-2xl bg-black px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
                 >
                   {selected.is_published ? "Dépublier" : "Publier"}
                 </button>
 
                 <a
-                  href={`/product/${encodeURIComponent(selected.slug)}`}
+                  href={`/shop/${encodeURIComponent(selected.slug)}`}
                   target="_blank"
-                  className="rounded-2xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black/80 hover:bg-black/5 transition"
+                  rel="noreferrer"
+                  className="rounded-2xl border border-black/10 bg-white px-5 py-3 text-sm font-semibold text-black/80 transition hover:bg-black/5"
                 >
                   Voir la fiche →
                 </a>
@@ -210,10 +219,11 @@ function AdminTemplateForm({
 }) {
   const [title, setTitle] = useState(existing?.title ?? "");
   const [slug, setSlug] = useState(existing?.slug ?? "");
-  const finalSlug = slugify(slug || title);
   const [shortDesc, setShortDesc] = useState(existing?.short_description ?? "");
   const [longDesc, setLongDesc] = useState(existing?.long_description ?? "");
-  const [priceAmount, setPriceAmount] = useState(existing?.price_amount ?? "");
+  const [priceAmount, setPriceAmount] = useState(
+    existing?.price_amount?.toString() ?? ""
+  );
   const [category, setCategory] = useState(existing?.category ?? "");
   const [tags, setTags] = useState((existing?.tags ?? []).join(", "));
   const [saving, setSaving] = useState(false);
@@ -224,7 +234,7 @@ function AdminTemplateForm({
     setSlug(existing?.slug ?? "");
     setShortDesc(existing?.short_description ?? "");
     setLongDesc(existing?.long_description ?? "");
-    setPriceAmount(existing?.price_amount ?? "");
+    setPriceAmount(existing?.price_amount?.toString() ?? "");
     setCategory(existing?.category ?? "");
     setTags((existing?.tags ?? []).join(", "));
     setMsg(null);
@@ -235,17 +245,25 @@ function AdminTemplateForm({
     setSaving(true);
 
     try {
-      const finalSlug = (slug || slugify(title)).trim();
+      const computedSlug = (slug || slugify(title)).trim();
+
       if (!title.trim()) throw new Error("Titre obligatoire");
-      if (!finalSlug) throw new Error("Slug invalide");
+      if (!computedSlug) throw new Error("Slug invalide");
       if (!shortDesc.trim()) throw new Error("Description courte obligatoire");
+
+      const parsedPrice =
+        priceAmount.trim() === "" ? null : Number(priceAmount.replace(",", "."));
+
+      if (parsedPrice !== null && Number.isNaN(parsedPrice)) {
+        throw new Error("Le prix doit être un nombre valide");
+      }
 
       const payload = {
         title: title.trim(),
-        slug: finalSlug,
+        slug: computedSlug,
         short_description: shortDesc.trim(),
         long_description: longDesc?.trim() || null,
-        price_amount: priceAmount?.trim() || null,
+        price_amount: parsedPrice,
         category: category?.trim() || null,
         tags: tags
           .split(",")
@@ -258,6 +276,7 @@ function AdminTemplateForm({
           .from("templates")
           .update(payload)
           .eq("id", existing.id);
+
         if (error) throw new Error(error.message);
         onSaved(existing.id);
       } else {
@@ -266,8 +285,9 @@ function AdminTemplateForm({
           .insert(payload)
           .select("id")
           .single();
+
         if (error) throw new Error(error.message);
-        onSaved(data!.id);
+        onSaved(data.id);
       }
     } catch (e: any) {
       setMsg(e?.message ?? "Erreur");
@@ -289,6 +309,7 @@ function AdminTemplateForm({
           onChange={setTitle}
           placeholder="Ex: Portfolio Minimal"
         />
+
         <Field
           label="Slug"
           value={slug}
@@ -297,11 +318,12 @@ function AdminTemplateForm({
         />
 
         <Field
-          label="Prix (label)"
+          label="Prix (€)"
           value={priceAmount}
           onChange={setPriceAmount}
-          placeholder="Ex: 49€"
+          placeholder="Ex: 29.99"
         />
+
         <Field
           label="Catégorie"
           value={category}
@@ -337,7 +359,7 @@ function AdminTemplateForm({
       <button
         onClick={save}
         disabled={saving}
-        className="mt-4 w-full rounded-2xl bg-[#e0b5cb] px-4 py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60 transition"
+        className="mt-4 w-full rounded-2xl bg-[#e0b5cb] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
       >
         {saving ? "Enregistrement..." : "Enregistrer"}
       </button>
