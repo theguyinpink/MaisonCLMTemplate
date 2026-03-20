@@ -31,11 +31,18 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
 
+  console.log("Webhook secret present:", !!process.env.STRIPE_WEBHOOK_SECRET);
+  console.log(
+    "Webhook secret prefix:",
+    process.env.STRIPE_WEBHOOK_SECRET?.slice(0, 12),
+  );
+  console.log("Stripe signature present:", !!signature);
+
   try {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.STRIPE_WEBHOOK_SECRET!,
     );
   } catch (error) {
     console.error("Webhook signature error:", error);
@@ -53,25 +60,25 @@ export async function POST(req: Request) {
         // ---- ABONNEMENT ----
         if (session.mode === "subscription" && session.subscription) {
           const stripeSubscription = await stripe.subscriptions.retrieve(
-            String(session.subscription)
+            String(session.subscription),
           );
 
           const priceId = stripeSubscription.items.data[0]?.price?.id ?? null;
           const plan = await getPlanByStripePriceId(priceId);
 
-          const currentPeriodStart =
-            stripeSubscription.items.data[0]?.current_period_start
-              ? new Date(
-                  stripeSubscription.items.data[0].current_period_start * 1000
-                ).toISOString()
-              : null;
+          const currentPeriodStart = stripeSubscription.items.data[0]
+            ?.current_period_start
+            ? new Date(
+                stripeSubscription.items.data[0].current_period_start * 1000,
+              ).toISOString()
+            : null;
 
-          const currentPeriodEnd =
-            stripeSubscription.items.data[0]?.current_period_end
-              ? new Date(
-                  stripeSubscription.items.data[0].current_period_end * 1000
-                ).toISOString()
-              : null;
+          const currentPeriodEnd = stripeSubscription.items.data[0]
+            ?.current_period_end
+            ? new Date(
+                stripeSubscription.items.data[0].current_period_end * 1000,
+              ).toISOString()
+            : null;
 
           const canceledAt = stripeSubscription.canceled_at
             ? new Date(stripeSubscription.canceled_at * 1000).toISOString()
@@ -81,7 +88,9 @@ export async function POST(req: Request) {
             {
               user_id: userId,
               plan_id: plan?.id ?? null,
-              stripe_customer_id: session.customer ? String(session.customer) : null,
+              stripe_customer_id: session.customer
+                ? String(session.customer)
+                : null,
               stripe_subscription_id: stripeSubscription.id,
               status: stripeSubscription.status,
               current_period_start: currentPeriodStart,
@@ -93,7 +102,7 @@ export async function POST(req: Request) {
             },
             {
               onConflict: "stripe_subscription_id",
-            }
+            },
           );
         }
 
@@ -183,19 +192,19 @@ export async function POST(req: Request) {
         const priceId = stripeSubscription.items.data[0]?.price?.id ?? null;
         const plan = await getPlanByStripePriceId(priceId);
 
-        const currentPeriodStart =
-          stripeSubscription.items.data[0]?.current_period_start
-            ? new Date(
-                stripeSubscription.items.data[0].current_period_start * 1000
-              ).toISOString()
-            : null;
+        const currentPeriodStart = stripeSubscription.items.data[0]
+          ?.current_period_start
+          ? new Date(
+              stripeSubscription.items.data[0].current_period_start * 1000,
+            ).toISOString()
+          : null;
 
-        const currentPeriodEnd =
-          stripeSubscription.items.data[0]?.current_period_end
-            ? new Date(
-                stripeSubscription.items.data[0].current_period_end * 1000
-              ).toISOString()
-            : null;
+        const currentPeriodEnd = stripeSubscription.items.data[0]
+          ?.current_period_end
+          ? new Date(
+              stripeSubscription.items.data[0].current_period_end * 1000,
+            ).toISOString()
+          : null;
 
         const canceledAt = stripeSubscription.canceled_at
           ? new Date(stripeSubscription.canceled_at * 1000).toISOString()
@@ -208,7 +217,8 @@ export async function POST(req: Request) {
             status: stripeSubscription.status,
             current_period_start: currentPeriodStart,
             current_period_end: currentPeriodEnd,
-            cancel_at_period_end: stripeSubscription.cancel_at_period_end ?? false,
+            cancel_at_period_end:
+              stripeSubscription.cancel_at_period_end ?? false,
             canceled_at: canceledAt,
             updated_at: new Date().toISOString(),
           })

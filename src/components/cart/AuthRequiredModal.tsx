@@ -44,7 +44,7 @@ export default function AuthRequiredModal({
           <button
             type="button"
             onClick={onConfirm}
-            className="inline-flex items-center justify-center rounded-full bg-[#0f172a] px-6 py-3 text-sm font-medium text-white"
+            className="inline-flex cursor-pointer items-center justify-center rounded-full bg-[#0f172a] px-6 py-3 text-sm font-medium text-white"
           >
             Se connecter / S’inscrire
           </button>
