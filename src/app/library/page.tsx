@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getCurrentUserId, userHasActiveSubscription } from "@/lib/access";
+import {
+  getCurrentUserId,
+  getOwnedTemplates,
+  userHasActiveSubscription,
+} from "@/lib/access";
 import { FavoriteButton } from "@/components/FavoriteButton";
 
 type TemplateRow = {
@@ -52,36 +56,18 @@ export default async function LibraryPage() {
 
     list = (templates ?? []) as TemplateRow[];
   } else {
-    const { data: entitlements, error } = await supabase
-      .from("entitlements")
-      .select(`
-        template_id,
-        templates (
-          id,
-          slug,
-          title,
-          short_description,
-          category,
-          tags,
-          is_published
-        )
-      `)
-      .eq("user_id", userId)
-      .eq("is_active", true);
+    const ownedTemplates = await getOwnedTemplates(userId);
 
-    if (error) {
-      return (
-        <main className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <Card>
-            <p className="text-slate-600">Erreur bibliothèque : {error.message}</p>
-          </Card>
-        </main>
-      );
-    }
-
-    list = (entitlements ?? [])
-      .map((row: any) => row.templates)
-      .filter((template: any) => template && template.is_published) as TemplateRow[];
+    list = (ownedTemplates ?? [])
+      .filter((template: any) => template && template.is_published)
+      .map((template: any) => ({
+        id: template.id,
+        slug: template.slug,
+        title: template.title,
+        short_description: template.short_description,
+        category: template.category,
+        tags: template.tags,
+      })) as TemplateRow[];
   }
 
   const ids = list.map((t) => t.id);
