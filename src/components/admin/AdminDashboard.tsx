@@ -11,7 +11,7 @@ type TemplateRow = {
   title: string;
   short_description: string;
   long_description: string | null;
-  price_label: string | null;
+  price_amount: string | null;
   category: string | null;
   tags: string[];
   is_published: boolean;
@@ -213,7 +213,7 @@ function AdminTemplateForm({
   const finalSlug = slugify(slug || title);
   const [shortDesc, setShortDesc] = useState(existing?.short_description ?? "");
   const [longDesc, setLongDesc] = useState(existing?.long_description ?? "");
-  const [priceLabel, setPriceLabel] = useState(existing?.price_label ?? "");
+  const [priceAmount, setPriceAmount] = useState(existing?.price_amount ?? "");
   const [category, setCategory] = useState(existing?.category ?? "");
   const [tags, setTags] = useState((existing?.tags ?? []).join(", "));
   const [saving, setSaving] = useState(false);
@@ -224,7 +224,7 @@ function AdminTemplateForm({
     setSlug(existing?.slug ?? "");
     setShortDesc(existing?.short_description ?? "");
     setLongDesc(existing?.long_description ?? "");
-    setPriceLabel(existing?.price_label ?? "");
+    setPriceAmount(existing?.price_amount ?? "");
     setCategory(existing?.category ?? "");
     setTags((existing?.tags ?? []).join(", "));
     setMsg(null);
@@ -245,7 +245,7 @@ function AdminTemplateForm({
         slug: finalSlug,
         short_description: shortDesc.trim(),
         long_description: longDesc?.trim() || null,
-        price_label: priceLabel?.trim() || null,
+        price_amount: priceAmount?.trim() || null,
         category: category?.trim() || null,
         tags: tags
           .split(",")
@@ -298,8 +298,8 @@ function AdminTemplateForm({
 
         <Field
           label="Prix (label)"
-          value={priceLabel}
-          onChange={setPriceLabel}
+          value={priceAmount}
+          onChange={setPriceAmount}
           placeholder="Ex: 49€"
         />
         <Field
