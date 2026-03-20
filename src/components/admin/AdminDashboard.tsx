@@ -17,6 +17,8 @@ type TemplateRow = {
   created_at: string;
 };
 
+type TemplateFilePath = "index.html" | "style.css" | "main.js";
+
 export function AdminDashboard() {
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export function AdminDashboard() {
         <div>
           <h1 className="text-2xl font-semibold">Admin</h1>
           <p className="mt-1 text-sm text-black/60">
-            Ajoute tes templates, gère les images, publie/dépublie.
+            Ajoute tes templates, gère les images, le code, puis publie/dépublie.
           </p>
         </div>
 
@@ -164,6 +166,7 @@ export function AdminDashboard() {
             onSaved={async (id) => {
               await load();
               setSelectedId(id);
+              setView("edit");
               setMsg("Enregistré ✅");
             }}
           />
@@ -226,8 +229,14 @@ function AdminTemplateForm({
   );
   const [category, setCategory] = useState(existing?.category ?? "");
   const [tags, setTags] = useState((existing?.tags ?? []).join(", "));
+
+  const [htmlCode, setHtmlCode] = useState(defaultHtmlTemplate());
+  const [cssCode, setCssCode] = useState(defaultCssTemplate());
+  const [jsCode, setJsCode] = useState(defaultJsTemplate());
+
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [loadingFiles, setLoadingFiles] = useState(false);
 
   useEffect(() => {
     setTitle(existing?.title ?? "");
@@ -238,7 +247,88 @@ function AdminTemplateForm({
     setCategory(existing?.category ?? "");
     setTags((existing?.tags ?? []).join(", "));
     setMsg(null);
+
+    if (!existing) {
+      setHtmlCode(defaultHtmlTemplate());
+      setCssCode(defaultCssTemplate());
+      setJsCode(defaultJsTemplate());
+      return;
+    }
+
+    void loadTemplateFiles(existing.id);
   }, [existing?.id]);
+
+  async function loadTemplateFiles(templateId: string) {
+    setLoadingFiles(true);
+
+    const { data, error } = await supabaseBrowser
+      .from("template_files")
+      .select("path, content")
+      .eq("template_id", templateId);
+
+    if (error) {
+      setMsg(error.message);
+      setLoadingFiles(false);
+      return;
+    }
+
+    const files = data ?? [];
+
+    const html = files.find((f) => f.path === "index.html")?.content;
+    const css = files.find((f) => f.path === "style.css")?.content;
+    const js = files.find((f) => f.path === "main.js")?.content;
+
+    setHtmlCode(html || defaultHtmlTemplate());
+    setCssCode(css || defaultCssTemplate());
+    setJsCode(js || defaultJsTemplate());
+    setLoadingFiles(false);
+  }
+
+  async function saveTemplateFile(params: {
+    templateId: string;
+    path: TemplateFilePath;
+    content: string;
+  }) {
+    const { templateId, path, content } = params;
+
+    const { data: existingFile, error: findError } = await supabaseBrowser
+      .from("template_files")
+      .select("id")
+      .eq("template_id", templateId)
+      .eq("path", path)
+      .maybeSingle();
+
+    if (findError) {
+      throw new Error(findError.message);
+    }
+
+    if (existingFile?.id) {
+      const { error: updateError } = await supabaseBrowser
+        .from("template_files")
+        .update({
+          content,
+        })
+        .eq("id", existingFile.id);
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      return;
+    }
+
+    const { error: insertError } = await supabaseBrowser
+      .from("template_files")
+      .insert({
+        template_id: templateId,
+        path,
+        content,
+      });
+
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
+  }
 
   async function save() {
     setMsg(null);
@@ -271,6 +361,8 @@ function AdminTemplateForm({
           .filter(Boolean),
       };
 
+      let templateId: string;
+
       if (existing) {
         const { error } = await supabaseBrowser
           .from("templates")
@@ -278,7 +370,7 @@ function AdminTemplateForm({
           .eq("id", existing.id);
 
         if (error) throw new Error(error.message);
-        onSaved(existing.id);
+        templateId = existing.id;
       } else {
         const { data, error } = await supabaseBrowser
           .from("templates")
@@ -287,8 +379,28 @@ function AdminTemplateForm({
           .single();
 
         if (error) throw new Error(error.message);
-        onSaved(data.id);
+        templateId = data.id;
       }
+
+      await Promise.all([
+        saveTemplateFile({
+          templateId,
+          path: "index.html",
+          content: htmlCode,
+        }),
+        saveTemplateFile({
+          templateId,
+          path: "style.css",
+          content: cssCode,
+        }),
+        saveTemplateFile({
+          templateId,
+          path: "main.js",
+          content: jsCode,
+        }),
+      ]);
+
+      onSaved(templateId);
     } catch (e: any) {
       setMsg(e?.message ?? "Erreur");
     } finally {
@@ -356,10 +468,39 @@ function AdminTemplateForm({
         />
       </div>
 
+      <div className="mt-8 space-y-5">
+        <h3 className="text-base font-semibold text-black/80">Code du template</h3>
+
+        {loadingFiles ? (
+          <p className="text-sm text-black/60">Chargement des fichiers...</p>
+        ) : null}
+
+        <CodeEditor
+          label="index.html"
+          value={htmlCode}
+          onChange={setHtmlCode}
+          rows={16}
+        />
+
+        <CodeEditor
+          label="style.css"
+          value={cssCode}
+          onChange={setCssCode}
+          rows={16}
+        />
+
+        <CodeEditor
+          label="main.js"
+          value={jsCode}
+          onChange={setJsCode}
+          rows={14}
+        />
+      </div>
+
       <button
         onClick={save}
         disabled={saving}
-        className="mt-4 w-full rounded-2xl bg-[#e0b5cb] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+        className="mt-6 w-full rounded-2xl bg-[#e0b5cb] px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
       >
         {saving ? "Enregistrement..." : "Enregistrer"}
       </button>
@@ -415,4 +556,77 @@ function Textarea({
       />
     </div>
   );
+}
+
+function CodeEditor({
+  label,
+  value,
+  onChange,
+  rows,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  rows: number;
+}) {
+  return (
+    <div>
+      <label className="text-xs font-semibold text-black/60">{label}</label>
+      <textarea
+        spellCheck={false}
+        className="mt-2 min-h-[180px] w-full rounded-2xl border border-black/10 bg-[#0f172a] px-4 py-3 font-mono text-sm text-white outline-none focus:border-black/20"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows}
+      />
+    </div>
+  );
+}
+
+function defaultHtmlTemplate() {
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mon template</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <h1>Bonjour Maison CLM</h1>
+    <p>Commence ici ton template.</p>
+  </main>
+
+  <script src="main.js"></script>
+</body>
+</html>`;
+}
+
+function defaultCssTemplate() {
+  return `:root {
+  --bg: #ffffff;
+  --text: #111827;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+main {
+  padding: 40px;
+}`;
+}
+
+function defaultJsTemplate() {
+  return `document.addEventListener("DOMContentLoaded", () => {
+  console.log("Template prêt 🚀");
+});`;
 }
