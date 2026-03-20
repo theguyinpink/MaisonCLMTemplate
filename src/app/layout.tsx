@@ -6,6 +6,9 @@ import { Inter, Playfair_Display } from "next/font/google";
 export const metadata = {
   title: "Maison CLM — Templates modernes pour sites web",
   description: "Templates premium pour créer ton site rapidement.",
+  verification :{
+    google: "google-site-verification: googlee223452b28187cf7.html",
+  },
   keywords: [
     "Maison CLM",
     "CLM templates",
