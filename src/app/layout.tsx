@@ -3,6 +3,36 @@ import { Navbar } from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Inter, Playfair_Display } from "next/font/google";
 
+export const metadata = {
+  title: "Maison CLM — Templates modernes pour sites web",
+  description: "Templates premium pour créer ton site rapidement.",
+  keywords: [
+    "Maison CLM",
+    "CLM templates",
+    "templates site web",
+    "template vitrine",
+    "template portfolio",
+    "web design moderne",
+    "site web rapide",
+    "templates HTML CSS JS",
+  ],
+  openGraph: {
+    title: "Maison CLM",
+    description: "Templates web modernes et élégants",
+    url: "https://app.maisonclm.fr",
+    siteName: "Maison CLM",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: "fr_FR",
+    type: "website",
+  },
+};
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -32,9 +62,7 @@ export default function RootLayout({
 
           <Navbar />
 
-          <main className="flex-1">
-            {children}
-          </main>
+          <main className="flex-1">{children}</main>
 
           <Footer />
         </div>
