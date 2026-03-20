@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
+export const runtime = "nodejs";
+
 async function getPlanByStripePriceId(priceId: string | null | undefined) {
   if (!priceId) return null;
 
@@ -25,18 +27,18 @@ export async function POST(req: Request) {
   const body = await req.text();
   const signature = (await headers()).get("stripe-signature");
 
-  if (!signature) {
-    return new Response("Signature manquante", { status: 400 });
-  }
-
-  let event: Stripe.Event;
-
   console.log("Webhook secret present:", !!process.env.STRIPE_WEBHOOK_SECRET);
   console.log(
     "Webhook secret prefix:",
     process.env.STRIPE_WEBHOOK_SECRET?.slice(0, 12),
   );
   console.log("Stripe signature present:", !!signature);
+
+  if (!signature) {
+    return new Response("Signature manquante", { status: 400 });
+  }
+
+  let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(
