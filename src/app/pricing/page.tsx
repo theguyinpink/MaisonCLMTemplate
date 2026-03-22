@@ -41,7 +41,7 @@ export default async function PricingPage() {
             </p>
 
             <div className="mt-6">
-              <div className="text-4xl font-semibold text-slate-900">30€</div>
+              <div className="text-4xl font-semibold text-slate-900">39€</div>
               <div className="text-sm text-slate-500">/ mois</div>
             </div>
           </div>
@@ -53,6 +53,7 @@ export default async function PricingPage() {
             <li>Sauvegarde des projets</li>
             <li>Export ZIP</li>
             <li>Sans mode visuel</li>
+            <li>Configuration Section Contact</li>
           </ul>
 
           <div className="mt-10">
@@ -95,7 +96,7 @@ export default async function PricingPage() {
             </p>
 
             <div className="mt-6">
-              <div className="text-4xl font-semibold text-slate-900">50€</div>
+              <div className="text-4xl font-semibold text-slate-900">69€</div>
               <div className="text-sm text-slate-500">/ mois</div>
             </div>
           </div>
@@ -107,6 +108,11 @@ export default async function PricingPage() {
             <li>Guides clairs</li>
             <li>Sauvegarde des projets</li>
             <li>Export ZIP</li>
+            <li>Mode Visuel</li>
+            <li>Configuration Section Contact</li>
+            <li>SEO de base</li>
+            <li>Support Prioritaire</li>
+            <li>Aide et support de l'hébergement</li>
           </ul>
 
           <div className="mt-10">
