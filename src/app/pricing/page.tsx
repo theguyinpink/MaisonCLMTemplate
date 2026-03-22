@@ -54,6 +54,7 @@ export default async function PricingPage() {
             <li>Export ZIP</li>
             <li>Sans mode visuel</li>
             <li>Configuration Section Contact</li>
+            <li>Support Technique</li>
           </ul>
 
           <div className="mt-10">
