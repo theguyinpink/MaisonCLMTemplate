@@ -6,6 +6,7 @@ import {
   userHasAccessToTemplate,
   userHasActiveSubscription,
 } from "@/lib/access";
+import TemplateGallery from "@/components/shop/TemplateGallery";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -62,10 +63,6 @@ export default async function ShopSlugPage({ params }: PageProps) {
     templateImages[0] ??
     null;
 
-  const secondaryImages = mainImage
-    ? templateImages.filter((img) => img.id !== mainImage.id)
-    : templateImages;
-
   const hasAccess = await userHasAccessToTemplate(template.id);
   const hasSubscription = await userHasActiveSubscription();
 
@@ -78,8 +75,8 @@ export default async function ShopSlugPage({ params }: PageProps) {
       : template.price_label || "29,99 €";
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-      <section className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+    <main className="mx-auto w-full max-w-7xl xl:max-w-[1400px] px-4 py-12 sm:px-6 lg:px-8">
+      <section className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
         {/* Texte */}
         <div>
           <p className="text-sm uppercase tracking-[0.28em] text-[#d86aa2]">
@@ -197,40 +194,9 @@ export default async function ShopSlugPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Visuels */}
+               {/* Visuels */}
         <div>
-          {mainImage ? (
-            <div className="space-y-4">
-              <div className="overflow-hidden rounded-[30px] border border-[#ecdfe5] bg-white shadow-[0_16px_45px_rgba(15,23,42,0.06)]">
-                <img
-                  src={mainImage.url}
-                  alt={template.title}
-                  className="h-auto w-full object-cover"
-                />
-              </div>
-
-              {secondaryImages.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4">
-                  {secondaryImages.slice(0, 4).map((image) => (
-                    <div
-                      key={image.id}
-                      className="overflow-hidden rounded-[22px] border border-[#ecdfe5] bg-white"
-                    >
-                      <img
-                        src={image.url}
-                        alt={template.title}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            <div className="rounded-[30px] border border-[#ecdfe5] bg-[#fbf8fa] p-12 text-center text-slate-500">
-              Aucun visuel disponible pour ce template.
-            </div>
-          )}
+          <TemplateGallery title={template.title} images={templateImages} />
         </div>
       </section>
 

@@ -32,6 +32,8 @@ export default function AddToCartButton({ item }: Props) {
     setAdded(true);
   };
 
+  
+
   return (
     <button
       type="button"
