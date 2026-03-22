@@ -50,7 +50,7 @@ export default function HomePage() {
           <div className="rose-panel relative z-10 mt-8 rounded-[30px] p-8 text-center lg:mt-0 lg:p-10">
             <div className="space-y-8">
               <div>
-                <p className="text-6xl font-semibold text-[var(--foreground)]">+1</p>
+                <p className="text-6xl font-semibold text-[var(--foreground)]">+20</p>
                 <p className="mt-2 text-sm uppercase tracking-[0.32em] text-[var(--accent-dark)]/80">univers cohérent</p>
               </div>
               <div className="mx-auto h-px w-20 bg-white/70" />

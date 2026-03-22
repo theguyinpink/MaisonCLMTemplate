@@ -7,7 +7,7 @@ export default function Footer() {
         <div>
           <p className="font-display text-lg text-[var(--foreground)]">Maison CLM</p>
           <p className="mt-1 max-w-md text-sm leading-relaxed">
-            Templates élégants, sobres et personnalisables dans le même univers que le site principal.
+            Templates élégants, sobres et personnalisables avec la touch Maison CLM.
           </p>
         </div>
 
