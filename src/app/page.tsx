@@ -77,7 +77,7 @@ export default function HomePage() {
         </div>
 
         <div className="mt-8 grid gap-5 md:grid-cols-3">
-          <FeatureCard title="Élégant" desc="Une direction artistique claire, féminine et haut de gamme, avec ton rose pastel en fil conducteur." />
+          <FeatureCard title="Élégant" desc="Une direction artistique claire, haut de gamme, avec ton rose pastel en fil conducteur." />
           <FeatureCard title="Simple à adapter" desc="Tu remplaces les textes, les images, les couleurs principales et tu obtiens vite un site cohérent." />
           <FeatureCard title="Pensé pour vendre" desc="Les sections sont faites pour rassurer, présenter l’offre et guider vers la prise de contact ou l’achat." />
         </div>
