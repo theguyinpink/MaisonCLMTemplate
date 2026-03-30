@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { addToCart, isInCart } from "@/lib/cart";
 
 type Props = {
@@ -16,9 +17,31 @@ type Props = {
 };
 
 export default function AddToCartButton({ item }: Props) {
-  const [added, setAdded] = useState(isInCart(item.id));
+  const [added, setAdded] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
 
-  const handleAdd = () => {
+  useEffect(() => {
+    setAdded(isInCart(item.id));
+    setJustAdded(false);
+  }, [item.id]);
+
+  useEffect(() => {
+    if (!justAdded) return;
+
+    const timer = window.setTimeout(() => {
+      setJustAdded(false);
+    }, 3500);
+
+    return () => window.clearTimeout(timer);
+  }, [justAdded]);
+
+  function handleAdd() {
+    if (isInCart(item.id)) {
+      setAdded(true);
+      setJustAdded(false);
+      return;
+    }
+
     addToCart({
       id: item.id,
       slug: item.slug,
@@ -30,18 +53,56 @@ export default function AddToCartButton({ item }: Props) {
     });
 
     setAdded(true);
-  };
+    setJustAdded(true);
+  }
 
-  
+  if (added) {
+    return (
+      <div className="space-y-3" aria-live="polite">
+        <div className="rounded-[24px] border border-[#f0e6eb] bg-[#fffafd] p-4">
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#c06293]">
+            {justAdded ? "Ajouté au panier" : "Déjà dans ton panier"}
+          </p>
+
+          <p className="mt-2 text-sm leading-7 text-slate-600">
+            {justAdded
+              ? "Ton template a bien été ajouté. Tu peux passer au panier ou continuer à explorer la boutique."
+              : "Ce template est déjà présent dans ton panier. Tu peux le retrouver à tout moment avant paiement."}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Link
+            href="/cart"
+            className="inline-flex w-full items-center justify-center rounded-2xl bg-[#0f172a] px-6 py-4 text-sm font-medium text-white transition hover:opacity-90"
+          >
+            Voir le panier
+          </Link>
+
+          <Link
+            href="/shop"
+            className="inline-flex w-full items-center justify-center rounded-2xl border border-[#ead6df] px-6 py-4 text-sm font-medium text-slate-700 transition hover:bg-[#fcf6f9]"
+          >
+            Continuer mes achats
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <button
-      type="button"
-      onClick={handleAdd}
-      disabled={added}
-      className="inline-flex cursor-pointer items-center justify-center rounded-full bg-[#0f172a] px-6 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {added ? "Ajouté au panier" : "Acheter ce template"}
-    </button>
+    <div className="space-y-3">
+      <button
+        type="button"
+        onClick={handleAdd}
+        className="inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-[#0f172a] px-6 py-4text-sm font-medium text-white transition hover:opacity-90"
+      >
+        Ajouter au panier
+      </button>
+
+      <p className="text-center text-xs leading-6 text-slate-400">
+        Achat unitaire avec accès permanent après paiement.
+      </p>
+    </div>
   );
 }

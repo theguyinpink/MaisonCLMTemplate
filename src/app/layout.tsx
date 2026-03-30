@@ -6,7 +6,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 export const metadata = {
   title: "Maison CLM — Templates modernes pour sites web",
   description: "Templates premium pour créer ton site rapidement.",
-  verification :{
+  verification: {
     google: "google-site-verification: googlee223452b28187cf7.html",
   },
   keywords: [
@@ -55,19 +55,19 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={`${inter.variable} ${playfair.variable} min-h-screen`}>
-        <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+        <div className="relative min-h-screen overflow-x-hidden bg-[var(--background)]">
           <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-28 border-b border-[var(--border)] bg-white/78 backdrop-blur-xl" />
-            <div className="absolute -left-28 top-20 h-72 w-72 rounded-full bg-[var(--accent-light)]/55 blur-3xl" />
-            <div className="absolute -right-24 top-24 h-80 w-80 rounded-full bg-[#f6e8f0] blur-3xl" />
+            <div className="absolute -left-28 top-20 h-72 w-72 rounded-full bg-[var(--accent-light)]/40 blur-3xl" />
+            <div className="absolute -right-24 top-24 h-80 w-80 rounded-full bg-[#f7eef3] blur-3xl" />
             <div className="absolute bottom-20 left-1/2 h-72 w-[32rem] -translate-x-1/2 rounded-full bg-white/85 blur-3xl" />
           </div>
 
-          <Navbar />
-
-          <main className="flex-1">{children}</main>
-
-          <Footer />
+          <div className="flex min-h-screen w-full flex-col bg-[rgba(255,255,255,0.18)]">
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
         </div>
       </body>
     </html>

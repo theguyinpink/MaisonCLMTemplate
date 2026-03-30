@@ -4,20 +4,20 @@ import { useState } from "react";
 
 const FAQS = [
   {
-    q: "Est-ce que je peux modifier les couleurs et le texte ?",
-    a: "Oui. Le template est pensé pour être facilement personnalisable : couleurs, textes, images et ambiance globale.",
+    q: "Est-ce que je peux modifier les couleurs, textes et images ?",
+    a: "Oui. Les templates sont pensés pour être personnalisés rapidement : textes, visuels, palette et ambiance globale.",
   },
   {
-    q: "Est-ce responsive mobile ?",
-    a: "Oui, le design est pensé pour téléphone, tablette et desktop avec une structure propre dès le départ.",
+    q: "Est-ce que les templates sont responsive ?",
+    a: "Oui. Ils sont pensés pour téléphone, tablette et desktop avec une base propre dès le départ.",
   },
   {
-    q: "Je reçois quoi après paiement ?",
-    a: "La logique d’achat est en place. Le checkout final sera branché ensuite pour livrer les accès dans le compte client.",
+    q: "Qu’est-ce que je reçois après paiement ?",
+    a: "Après achat, le template est lié à ton compte et tu peux le retrouver dans ta bibliothèque pour démarrer ton projet.",
   },
   {
-    q: "Est-ce que je peux acheter plusieurs fois le même template ?",
-    a: "Pas besoin : un achat correspond à un template. L’idée est de garder une expérience simple et claire.",
+    q: "Quelle est la différence entre l’achat unitaire et les formules ?",
+    a: "L’achat unitaire te donne l’accès permanent à un template précis. Les formules donnent accès à toute la bibliothèque avec davantage d’outils d’édition et d’accompagnement.",
   },
 ];
 
@@ -45,7 +45,11 @@ export function FAQ() {
                 <p className="text-sm font-semibold">{f.q}</p>
                 <span className="text-black/50">{isOpen ? "−" : "+"}</span>
               </div>
-              {isOpen ? <p className="mt-2 text-sm leading-relaxed text-black/60">{f.a}</p> : null}
+              {isOpen ? (
+                <p className="mt-2 text-sm leading-relaxed text-black/60">
+                  {f.a}
+                </p>
+              ) : null}
             </button>
           );
         })}

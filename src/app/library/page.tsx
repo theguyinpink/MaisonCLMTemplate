@@ -46,7 +46,7 @@ export default async function LibraryPage() {
 
     if (error) {
       return (
-        <main className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <main className="mx-auto w-full max-w-[1400px] px-6 py-12 sm:px-8 lg:px-10">
           <Card>
             <p className="text-slate-600">Erreur bibliothèque : {error.message}</p>
           </Card>
@@ -102,7 +102,7 @@ export default async function LibraryPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <main className="mx-auto w-full max-w-[1400px] px-6 py-12 sm:px-8 lg:px-10">
       <section className="rounded-[34px] border border-[#eddce4] bg-[linear-gradient(135deg,rgba(248,238,243,0.95)_0%,rgba(255,255,255,0.96)_45%,rgba(252,244,248,0.95)_100%)] px-6 py-10 shadow-[0_20px_60px_rgba(20,20,43,0.05)] sm:px-10 sm:py-14">
         <div className="max-w-3xl">
           <p className="text-sm uppercase tracking-[0.28em] text-[#d86aa2]">
