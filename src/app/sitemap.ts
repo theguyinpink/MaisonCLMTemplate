@@ -9,5 +9,29 @@ export default function sitemap() {
     {
       url: "https://app.maisonclm.fr/pricing",
     },
+    {
+      url: "https://app.maisonclm.fr/library",
+    },
+    {
+      url: "https://app.maisonclm.fr/account",
+    },
+    {
+      url: "https://app.maisonclm.fr/auth",
+    },
+    {
+      url: "https://app.maisonclm.fr/cart",
+    },
+    {
+      url: "https://app.maisonclm.fr/cgv",
+    },
+    {
+      url: "https://app.maisonclm.fr/confidentialite",
+    },
+    {
+      url: "https://app.maisonclm.fr/editor",
+    },
+    {
+      url: "https://app.maisonclm.fr/mentions-legales",
+    },
   ];
 }
